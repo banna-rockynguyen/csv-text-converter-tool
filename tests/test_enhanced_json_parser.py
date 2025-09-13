@@ -66,18 +66,20 @@ class TestEnhancedJSONContentParser:
                 {
                     "slide_number": 1,
                     "tieu_de": "Slide 1",
-                    "noi_dung": ["Content 1", "Content 2"]
+                    "noi_dung": ["Content 1", "Content 2"],
                 }
             ],
             "giai_doan_pheu": "Awareness",
             "goi_y_cta": ["Test CTA"],
             "utm": {"utm_source": "Test"},
             "tags": ["#test"],
-            "ghi_chu": "Test note"
+            "ghi_chu": "Test note",
         }
-        
-        result = self.parser._parse_single_post(post, enable_ai=False, platform="LinkedIn")
-        
+
+        result = self.parser._parse_single_post(
+            post, enable_ai=False, platform="LinkedIn"
+        )
+
         assert result is not None
         assert result["Date"] == "01/01/2025"
         assert result["Content Type"] == "Carousel"
@@ -95,11 +97,13 @@ class TestEnhancedJSONContentParser:
             "giai_doan_pheu": "Awareness",
             "goi_y_cta": ["Test CTA"],
             "utm": {"utm_source": "Test"},
-            "tags": ["#test"]
+            "tags": ["#test"],
         }
-        
-        result = self.parser._parse_single_post(post, enable_ai=False, platform="LinkedIn")
-        
+
+        result = self.parser._parse_single_post(
+            post, enable_ai=False, platform="LinkedIn"
+        )
+
         assert result is not None
         assert result["Content Type"] == "Poll"
         assert "Test question?" in result["Content"]
@@ -114,11 +118,13 @@ class TestEnhancedJSONContentParser:
             "giai_doan_pheu": "Awareness",
             "goi_y_cta": [],
             "utm": {},
-            "tags": ["#custom"]
+            "tags": ["#custom"],
         }
-        
-        result = self.parser._parse_single_post(post, enable_ai=False, platform="LinkedIn")
-        
+
+        result = self.parser._parse_single_post(
+            post, enable_ai=False, platform="LinkedIn"
+        )
+
         assert "#RockyNguyen" in result["Tags"]
         assert "#BANNAConsulting" in result["Tags"]
         assert "#NguyenDanhNgoc" in result["Tags"]
@@ -126,12 +132,8 @@ class TestEnhancedJSONContentParser:
 
     def test_utm_link_generation(self):
         """Test UTM link generation"""
-        utm = {
-            "utm_source": "LinkedIn",
-            "utm_medium": "Post",
-            "utm_campaign": "Test"
-        }
-        
+        utm = {"utm_source": "LinkedIn", "utm_medium": "Post", "utm_campaign": "Test"}
+
         result = self.parser._generate_utm_link(utm)
         assert "UTM tracking" in result
         assert "utm_source: LinkedIn" in result
@@ -149,12 +151,14 @@ class TestEnhancedJSONContentParser:
                 "giai_doan_pheu": "Awareness",
                 "goi_y_cta": [],
                 "utm": {},
-                "tags": []
+                "tags": [],
             }
         ]
-        
-        result = self.parser.parse_json_to_csv(json_data, enable_ai=False, platform="LinkedIn")
-        
+
+        result = self.parser.parse_json_to_csv(
+            json_data, enable_ai=False, platform="LinkedIn"
+        )
+
         assert result is not None
         assert len(result) > 0
         assert "Date" in result[0]
