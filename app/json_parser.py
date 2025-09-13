@@ -403,3 +403,4 @@ class JSONContentParser:
         row[38] = post.get("utm_link", "")  # link
 
         return row
+

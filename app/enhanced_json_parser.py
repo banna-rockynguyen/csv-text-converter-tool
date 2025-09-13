@@ -386,7 +386,7 @@ class EnhancedJSONContentParser:
         self, content: str, post_type: str, platform: str
     ) -> Dict[str, Any]:
         """Create structured prompt with System and User prompts"""
-        
+
         # System Prompt (System Instruction)
         system_prompt = """Bạn là một Engine Tái cấu trúc Nội dung AI (AI Content Restructuring Engine) chuyên nghiệp. Nhiệm vụ của bạn là nhận một object JSON chứa nội dung thô và các yêu cầu, sau đó chuyển đổi nó thành một chuỗi văn bản (string) có cấu trúc chặt chẽ, sẵn sàng để hiển thị trên các nền tảng mạng xã hội.
 
@@ -555,76 +555,82 @@ Dựa vào trường `"platform"` trong JSON đầu vào, bạn phải điều c
     def _format_structured_content(self, content: str) -> str:
         """Convert structured tags to readable format - NO BOLD, CAPS ONLY with MAXIMUM SPACING"""
         import re
-        
+
         # Step 1: Handle all [BLOCK] patterns first with MAXIMUM spacing
         # [BLOCK]content -> content with MAXIMUM line breaks
-        content = re.sub(r'\[BLOCK\]([^\n\[]+)', r'\n\n\n\n\1', content)
+        content = re.sub(r"\[BLOCK\]([^\n\[]+)", r"\n\n\n\n\1", content)
         # [BLOCK]**text** -> TEXT with MAXIMUM line breaks (convert to CAPS)
-        content = re.sub(r'\[BLOCK\]\*\*([^*]+)\*\*', lambda m: f'\n\n\n\n{m.group(1).upper()}', content)
+        content = re.sub(
+            r"\[BLOCK\]\*\*([^*]+)\*\*",
+            lambda m: f"\n\n\n\n{m.group(1).upper()}",
+            content,
+        )
         # [BLOCK][CTA]... -> CTA with MAXIMUM line breaks
-        content = re.sub(r'\[BLOCK\]\[CTA\](.*?)\[/CTA\]', r'\n\n\n\n👉 \1', content)
+        content = re.sub(r"\[BLOCK\]\[CTA\](.*?)\[/CTA\]", r"\n\n\n\n👉 \1", content)
         # [BLOCK] followed by any non-bracket character
-        content = re.sub(r'\[BLOCK\]([^\[])', r'\n\n\n\n\1', content)
-        
+        content = re.sub(r"\[BLOCK\]([^\[])", r"\n\n\n\n\1", content)
+
         # Step 2: Handle other structured tags with MAXIMUM spacing BEFORE removing [BLOCK]
-        content = re.sub(r'\[CTA\](.*?)\[/CTA\]', r'\n\n\n\n👉 \1', content)
-        content = re.sub(r'\[TITLE\](.*?)\[/TITLE\]', lambda m: f'\n\n\n{m.group(1).upper()}\n\n', content)
-        content = re.sub(r'\[HIGHLIGHT\](.*?)\[/HIGHLIGHT\]', lambda m: m.group(1).upper(), content)
-        content = re.sub(r'\[EMOJI\]', '', content)
-        content = re.sub(r'\[HASHTAGS\](.*?)\[/HASHTAGS\]', r'\n\n\n\n\1', content)
-        
+        content = re.sub(r"\[CTA\](.*?)\[/CTA\]", r"\n\n\n\n👉 \1", content)
+        content = re.sub(
+            r"\[TITLE\](.*?)\[/TITLE\]",
+            lambda m: f"\n\n\n{m.group(1).upper()}\n\n",
+            content,
+        )
+        content = re.sub(
+            r"\[HIGHLIGHT\](.*?)\[/HIGHLIGHT\]", lambda m: m.group(1).upper(), content
+        )
+        content = re.sub(r"\[EMOJI\]", "", content)
+        content = re.sub(r"\[HASHTAGS\](.*?)\[/HASHTAGS\]", r"\n\n\n\n\1", content)
+
         # Step 3: Convert ALL **bold** text to CAPS
-        content = re.sub(r'\*\*([^*]+)\*\*', lambda m: m.group(1).upper(), content)
-        
+        content = re.sub(r"\*\*([^*]+)\*\*", lambda m: m.group(1).upper(), content)
+
         # Step 4: Add MAXIMUM spacing around important elements
         # Add spacing before numbered lists (1., 2., 3., etc.)
-        content = re.sub(r'\n(\d+\.)', r'\n\n\n\1', content)
+        content = re.sub(r"\n(\d+\.)", r"\n\n\n\1", content)
         # Add spacing before bullet points
-        content = re.sub(r'\n([•\-\*])', r'\n\n\n\1', content)
+        content = re.sub(r"\n([•\-\*])", r"\n\n\n\1", content)
         # Add spacing before emoji lines
-        content = re.sub(r'\n([🎯📊💡📋💬📌])', r'\n\n\n\1', content)
+        content = re.sub(r"\n([🎯📊💡📋💬📌])", r"\n\n\n\1", content)
         # Add spacing before CTA lines
-        content = re.sub(r'\n(👉)', r'\n\n\n\1', content)
-        
+        content = re.sub(r"\n(👉)", r"\n\n\n\1", content)
+
         # Step 5: Add spacing between paragraphs
         # Add spacing after sentences ending with period
-        content = re.sub(r'(\.)\n([A-Z])', r'\1\n\n\2', content)
+        content = re.sub(r"(\.)\n([A-Z])", r"\1\n\n\2", content)
         # Add spacing after sentences ending with exclamation
-        content = re.sub(r'(!)\n([A-Z])', r'\1\n\n\2', content)
+        content = re.sub(r"(!)\n([A-Z])", r"\1\n\n\2", content)
         # Add spacing after sentences ending with question mark
-        content = re.sub(r'(\?)\n([A-Z])', r'\1\n\n\2', content)
-        
+        content = re.sub(r"(\?)\n([A-Z])", r"\1\n\n\2", content)
+
         # Step 6: Remove all remaining [BLOCK] and [/BLOCK] tags AFTER processing
-        content = re.sub(r'\[BLOCK\]', '', content)
-        content = re.sub(r'\[/BLOCK\]', '', content)
-        
+        content = re.sub(r"\[BLOCK\]", "", content)
+        content = re.sub(r"\[/BLOCK\]", "", content)
+
         # Step 7: Clean up excessive line breaks (but keep more than before)
         # Allow up to 4 consecutive line breaks, replace more with 4
-        content = re.sub(r'\n\s*\n\s*\n\s*\n\s*\n+', '\n\n\n\n', content)
+        content = re.sub(r"\n\s*\n\s*\n\s*\n\s*\n+", "\n\n\n\n", content)
         # Clean up spaces around line breaks
-        content = re.sub(r'\n\s+', '\n', content)
-        content = re.sub(r'\s+\n', '\n', content)
-        
+        content = re.sub(r"\n\s+", "\n", content)
+        content = re.sub(r"\s+\n", "\n", content)
+
         # Step 8: Final cleanup
         content = content.rstrip()
-        
+
         return content
 
     def _format_tags(self, tags: List[str]) -> str:
         """Format tags with required hashtags - UPDATED METHOD"""
         if not tags:
             tags = []
-        
+
         # Required hashtags
-        required_tags = [
-            "#RockyNguyen", 
-            "#BANNAConsulting", 
-            "#NguyenDanhNgoc"
-        ]
-        
+        required_tags = ["#RockyNguyen", "#BANNAConsulting", "#NguyenDanhNgoc"]
+
         # Combine original tags with required tags
         all_tags = tags + required_tags
-        
+
         # Remove duplicates while preserving order
         seen = set()
         unique_tags = []
@@ -632,22 +638,22 @@ Dựa vào trường `"platform"` trong JSON đầu vào, bạn phải điều c
             if tag not in seen:
                 seen.add(tag)
                 unique_tags.append(tag)
-        
+
         return ", ".join(unique_tags)
 
     def _generate_utm_note(self, utm: Dict[str, str]) -> str:
         """Generate UTM note instead of URL - NEW METHOD"""
         if not utm:
             return ""
-        
+
         utm_parts = []
         for key, value in utm.items():
             if value:
                 utm_parts.append(f"{key}: {value}")
-        
+
         if utm_parts:
             return f"UTM tracking: {', '.join(utm_parts)}"
-        
+
         return ""
 
     # Keep all existing methods unchanged (generate_content, generate_title, etc.)

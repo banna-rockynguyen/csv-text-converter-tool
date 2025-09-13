@@ -770,3 +770,4 @@ Dựa vào trường `"platform"` trong JSON đầu vào, bạn phải điều c
         row[38] = post.get("utm_link", "")
 
         return row
+

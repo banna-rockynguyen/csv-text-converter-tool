@@ -237,3 +237,4 @@ git reset --hard HEAD~1
 git checkout feature/your-feature
 git merge develop
 ```
+
