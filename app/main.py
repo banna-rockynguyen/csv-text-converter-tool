@@ -10,6 +10,8 @@ from .delimiter_detector import DelimiterDetector
 from .ghl_converter import GHLConverter
 from .json_parser import JSONContentParser
 from .enhanced_json_parser import EnhancedJSONContentParser
+from .ghl_api_client import GHLAPIClient
+from .ghl_integration import GHLIntegrationHandler
 
 app = Flask(__name__, template_folder="../templates")
 
@@ -43,23 +45,23 @@ def parse_text():
     """API endpoint to parse text and convert to CSV"""
     try:
         data = request.get_json()
-
+        
         if not data or "text" not in data:
             return jsonify({"success": False, "error": "No text provided"}), 400
 
         text = data["text"]
         delimiter = data.get("delimiter")  # Optional custom delimiter
-
+        
         # Parse the text
         result = text_parser.parse_text_to_csv_data(text, delimiter)
-
+        
         if result["success"]:
             # Validate the data
             validation = text_parser.validate_data(result["headers"], result["data"])
             result["validation"] = validation
-
+        
         return jsonify(result)
-
+    
     except Exception as e:
         return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
@@ -69,13 +71,13 @@ def detect_delimiter():
     """API endpoint to detect delimiter in text"""
     try:
         data = request.get_json()
-
+        
         if not data or "text" not in data:
             return jsonify({"success": False, "error": "No text provided"}), 400
 
         text = data["text"]
         delimiter, confidence, all_scores = delimiter_detector.detect_delimiter(text)
-
+        
         return jsonify(
             {
                 "success": True,
@@ -84,7 +86,7 @@ def detect_delimiter():
                 "all_scores": all_scores,
             }
         )
-
+    
     except Exception as e:
         return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
@@ -94,7 +96,7 @@ def download_csv():
     """API endpoint to download CSV file"""
     try:
         data = request.get_json()
-
+        
         if not data or "headers" not in data or "data" not in data:
             return jsonify({"success": False, "error": "Missing headers or data"}), 400
 
@@ -115,7 +117,7 @@ def download_csv():
         ) as temp_file:
             temp_file.write(csv_content)
             temp_file_path = temp_file.name
-
+        
         return send_file(
             temp_file_path,
             as_attachment=True,
@@ -225,7 +227,111 @@ def parse_json():
                 "ai_enhanced": parse_result.get("ai_enhanced", False),
             }
         )
+    
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
+
+@app.route("/ghl-integration")
+def ghl_integration_page():
+    """GoHighLevel integration page"""
+    return render_template("ghl_integration.html")
+
+
+@app.route("/api/ghl/test-connection", methods=["POST"])
+def test_ghl_connection():
+    """Test GoHighLevel API connection"""
+    try:
+        data = request.get_json()
+        
+        if not data or "api_key" not in data or "location_id" not in data:
+            return jsonify({"success": False, "error": "API key and location ID are required"}), 400
+        
+        api_key = data["api_key"]
+        location_id = data["location_id"]
+        
+        # Test connection
+        ghl_client = GHLAPIClient(api_key, location_id)
+        result = ghl_client.test_connection()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/ghl/create-posts", methods=["POST"])
+def create_ghl_posts():
+    """Create social media posts in GoHighLevel"""
+    try:
+        data = request.get_json()
+        
+        if not data or "api_key" not in data or "location_id" not in data or "csv_data" not in data:
+            return jsonify({"success": False, "error": "API key, location ID, and CSV data are required"}), 400
+        
+        api_key = data["api_key"]
+        location_id = data["location_id"]
+        csv_data = data["csv_data"]
+        platform = data.get("platform", "LinkedIn")
+        
+        # Initialize GHL integration handler
+        ghl_handler = GHLIntegrationHandler(api_key, location_id)
+        
+        # Create posts in GHL
+        result = ghl_handler.create_posts_in_ghl(csv_data, platform)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/ghl/get-posts", methods=["POST"])
+def get_ghl_posts():
+    """Get existing social media posts from GoHighLevel"""
+    try:
+        data = request.get_json()
+        
+        if not data or "api_key" not in data or "location_id" not in data:
+            return jsonify({"success": False, "error": "API key and location ID are required"}), 400
+        
+        api_key = data["api_key"]
+        location_id = data["location_id"]
+        limit = data.get("limit", 50)
+        
+        # Initialize GHL integration handler
+        ghl_handler = GHLIntegrationHandler(api_key, location_id)
+        
+        # Get posts from GHL
+        result = ghl_handler.get_existing_posts(limit)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/ghl/delete-post", methods=["POST"])
+def delete_ghl_post():
+    """Delete a social media post from GoHighLevel"""
+    try:
+        data = request.get_json()
+        
+        if not data or "api_key" not in data or "location_id" not in data or "post_id" not in data:
+            return jsonify({"success": False, "error": "API key, location ID, and post ID are required"}), 400
+        
+        api_key = data["api_key"]
+        location_id = data["location_id"]
+        post_id = data["post_id"]
+        
+        # Initialize GHL integration handler
+        ghl_handler = GHLIntegrationHandler(api_key, location_id)
+        
+        # Delete post from GHL
+        result = ghl_handler.delete_post(post_id)
+        
+        return jsonify(result)
+        
     except Exception as e:
         return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
