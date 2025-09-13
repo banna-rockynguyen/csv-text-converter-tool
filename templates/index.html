@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Text Converter Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .delimiter-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .delimiter-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 8px 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            width: 60px;
+            text-align: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .delimiter-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .delimiter-info strong {
+            color: #333;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .validation-results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .validation-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .validation-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .validation-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .delimiter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CSV Text Converter Tool</h1>
+            <p>Automatically detect delimiters and convert text to CSV format</p>
+            <div style="margin-top: 15px;">
+                <a href="/ghl"
+                    style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; margin: 0 10px;">GoHighLevel
+                    Template</a>
+                <a href="/json"
+                    style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; margin: 0 10px;">JSON
+                    Input</a>
+                <a href="/"
+                    style="color: white; text-decoration: none; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 20px; margin: 0 10px;">Standard
+                    Mode</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="textInput">Paste your text data here:</label>
+                    <textarea id="textInput" placeholder="Paste your text data here. The tool will automatically detect the delimiter and convert it to CSV format.
+
+Example:
+Date|Time|Content|ImageURL|Link
+2025-09-12|08:30|Sample content|https://example.com/image.jpg|https://example.com
+2025-09-12|11:00|More content||https://example2.com"></textarea>
+                </div>
+
+                <div class="delimiter-controls">
+                    <div class="delimiter-input">
+                        <label for="customDelimiter">Custom delimiter (optional):</label>
+                        <input type="text" id="customDelimiter" placeholder="Auto" maxlength="1">
+                    </div>
+                    <button onclick="parseText()" id="parseBtn">Convert to CSV</button>
+                    <button onclick="detectDelimiter()" id="detectBtn">Detect Delimiter</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your data...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h3>Parsed Data</h3>
+                    <div class="delimiter-info" id="delimiterInfo"></div>
+                    <button onclick="downloadCSV()" id="downloadBtn">Download CSV</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="validation-results" id="validationResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let currentHeaders = null;
+        let currentDelimiter = null;
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('parseBtn').disabled = true;
+            document.getElementById('detectBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('parseBtn').disabled = false;
+            document.getElementById('detectBtn').disabled = false;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        async function parseText() {
+            const text = document.getElementById('textInput').value.trim();
+            const customDelimiter = document.getElementById('customDelimiter').value.trim();
+
+            if (!text) {
+                showError('Please enter some text to convert');
+                return;
+            }
+
+            hideMessages();
+            showLoading();
+
+            try {
+                const response = await fetch('/api/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        delimiter: customDelimiter || null
+                    })
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    currentData = result.data;
+                    currentHeaders = result.headers;
+                    currentDelimiter = result.delimiter;
+
+                    displayResults(result);
+                    showSuccess(`Successfully parsed ${result.row_count} rows with ${result.column_count} columns`);
+                } else {
+                    showError(result.error || 'Failed to parse text');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        async function detectDelimiter() {
+            const text = document.getElementById('textInput').value.trim();
+
+            if (!text) {
+                showError('Please enter some text to analyze');
+                return;
+            }
+
+            hideMessages();
+            showLoading();
+
+            try {
+                const response = await fetch('/api/detect-delimiter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    const confidence = (result.confidence * 100).toFixed(1);
+                    showSuccess(`Detected delimiter: "${result.delimiter}" (confidence: ${confidence}%)`);
+
+                    // Update the custom delimiter field
+                    document.getElementById('customDelimiter').value = result.delimiter;
+                } else {
+                    showError(result.error || 'Failed to detect delimiter');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function displayResults(result) {
+            const resultsSection = document.getElementById('resultsSection');
+            const delimiterInfo = document.getElementById('delimiterInfo');
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+            const validationResults = document.getElementById('validationResults');
+
+            // Show results section
+            resultsSection.classList.add('show');
+
+            // Update delimiter info
+            const confidence = result.confidence ? (result.confidence * 100).toFixed(1) : 'N/A';
+            delimiterInfo.innerHTML = `
+                <strong>Delimiter:</strong> "${result.delimiter}" 
+                <strong>Confidence:</strong> ${confidence}%
+            `;
+
+            // Create table headers
+            tableHead.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            result.headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header || '(Empty)';
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+
+            // Create table body
+            tableBody.innerHTML = '';
+            result.data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell || '';
+                    td.title = cell || ''; // Tooltip for full content
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+
+            // Display validation results
+            if (result.validation) {
+                const validation = result.validation;
+                validationResults.className = 'validation-results';
+
+                if (validation.valid) {
+                    validationResults.classList.add('validation-success');
+                    validationResults.innerHTML = '<strong>✓ Data validation passed</strong>';
+                } else {
+                    validationResults.classList.add('validation-error');
+                    validationResults.innerHTML = '<strong>✗ Data validation failed</strong>';
+                }
+
+                if (validation.issues && validation.issues.length > 0) {
+                    validationResults.innerHTML += '<ul><li>' + validation.issues.join('</li><li>') + '</li></ul>';
+                }
+
+                if (validation.warnings && validation.warnings.length > 0) {
+                    validationResults.innerHTML += '<div style="margin-top: 10px;"><strong>Warnings:</strong><ul><li>' + validation.warnings.join('</li><li>') + '</li></ul></div>';
+                }
+            }
+        }
+
+        async function downloadCSV() {
+            if (!currentData || !currentHeaders) {
+                showError('No data to download. Please parse some text first.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/download-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        headers: currentHeaders,
+                        data: currentData,
+                        delimiter: currentDelimiter,
+                        filename: 'converted_data.csv'
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'converted_data.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showSuccess('CSV file downloaded successfully!');
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Failed to download CSV');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        // Allow Enter key to trigger parsing
+        document.getElementById('textInput').addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                parseText();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to GoHighLevel CSV Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .json-input-container {
+            position: relative;
+        }
+
+        .json-textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .json-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .json-textarea::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .post-preview {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .post-type {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .post-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .post-content {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .post-meta {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .meta-item {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e1e5e9;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .csv-preview {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .csv-preview h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .csv-content {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .ai-settings-section {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .ai-config {
+            display: grid;
+            gap: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .api-key-input,
+        .platform-select {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .api-key-input:focus,
+        .platform-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .help-text a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            accent-color: #667eea;
+            transform: scale(1.2);
+        }
+
+        .ai-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .ai-status.enabled {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .ai-status.disabled {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 JSON to GoHighLevel CSV Converter</h1>
+            <p>Chuyển đổi nội dung JSON thành CSV cho GoHighLevel</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 Nhập JSON Content</h2>
+                <div class="json-input-container">
+                    <textarea id="jsonInput" class="json-textarea"
+                        placeholder="Dán JSON content vào đây...&#10;&#10;Ví dụ:&#10;[&#10;  {&#10;    &quot;ngay&quot;: &quot;02/09/2025&quot;,&#10;    &quot;dinh_dang&quot;: &quot;Carousel&quot;,&#10;    &quot;tieu_de_chinh&quot;: &quot;Tiêu đề bài viết&quot;,&#10;    ...&#10;  }&#10;]"></textarea>
+                </div>
+
+                <div class="ai-settings-section">
+                    <h3 class="section-title">🤖 AI Enhancement Settings</h3>
+
+                    <div class="ai-config">
+                        <div class="config-group">
+                            <label for="geminiApiKey">Gemini 2.5 Pro API Key:</label>
+                            <input type="password" id="geminiApiKey" class="api-key-input"
+                                placeholder="Nhập API key Gemini 2.5 Pro...">
+                            <small class="help-text">
+                                Nhận API key tại: <a href="https://aistudio.google.com/app/apikey"
+                                    target="_blank">Google AI Studio</a>
+                            </small>
+                        </div>
+
+                        <div class="config-group">
+                            <label for="platformSelect">Target Platform:</label>
+                            <select id="platformSelect" class="platform-select">
+                                <option value="LinkedIn">LinkedIn (Professional)</option>
+                                <option value="Facebook">Facebook (Engaging)</option>
+                                <option value="Instagram">Instagram (Visual)</option>
+                                <option value="TikTok">TikTok (Trendy)</option>
+                            </select>
+                        </div>
+
+                        <div class="config-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="enableAI" checked>
+                                <span class="checkmark"></span>
+                                Enable AI Content Enhancement
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="parseBtn" class="btn btn-primary">🔍 Phân tích JSON</button>
+                    <button id="clearBtn" class="btn btn-secondary">🗑️ Xóa</button>
+                    <button id="loadSampleBtn" class="btn btn-secondary">📋 Load Sample</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Đang xử lý JSON content...</p>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h2 class="section-title">📊 Kết quả phân tích</h2>
+
+                <div id="successMessage" class="success-message hidden">
+                    <strong>✅ Thành công!</strong> <span id="successText"></span>
+                </div>
+
+                <div id="errorMessage" class="error-message hidden">
+                    <strong>❌ Lỗi!</strong> <span id="errorText"></span>
+                </div>
+
+                <div class="stats" id="statsSection">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPosts">0</div>
+                        <div class="stat-label">Tổng số bài viết</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="carouselPosts">0</div>
+                        <div class="stat-label">Carousel</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pollPosts">0</div>
+                        <div class="stat-label">Poll</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="storyPosts">0</div>
+                        <div class="stat-label">Short Story</div>
+                    </div>
+                </div>
+
+                <div id="postsPreview"></div>
+
+                <div class="button-group">
+                    <button id="downloadBtn" class="btn btn-success">📥 Tải xuống CSV</button>
+                    <button id="previewCsvBtn" class="btn btn-secondary">👁️ Xem trước CSV</button>
+                </div>
+
+                <div id="csvPreview" class="csv-preview hidden">
+                    <h4>📄 Xem trước CSV</h4>
+                    <div id="csvContent" class="csv-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let currentHeaders = null;
+        let currentPlatformHeaders = null;
+
+        // Sample JSON data
+        const sampleData = `[
+  {
+    "ngay": "02/09/2025",
+    "dinh_dang": "Carousel",
+    "tieu_de_chinh": "3 CÂU HỎI CẦN TRẢ LỜI TRƯỚC KHI NGHĨ ĐẾN CÔNG NGHỆ",
+    "noi_dung_carousel": [
+      {
+        "slide_number": 1,
+        "tieu_de": "3 CÂU HỎI",
+        "noi_dung": [
+          "CẦN TRẢ LỜI ĐỂ",
+          "CHUYỂN ĐỔI SỐ",
+          "**THÀNH CÔNG!**"
+        ]
+      }
+    ],
+    "giai_doan_pheu": "Awareness",
+    "goi_y_cta": [
+      "Lưu bài viết này để tham khảo.",
+      "Chia sẻ với đồng nghiệp hoặc quản lý."
+    ],
+    "utm": {
+      "utm_source": "LinkedIn",
+      "utm_medium": "CarouselPost",
+      "utm_campaign": "DigitalTransformationSME_Sept2025",
+      "utm_content": "3QuestionsBeforeTech"
+    },
+    "tags": [
+      "#ChuyenDoiSo",
+      "#ChienLuocKinhDoanh",
+      "#DigitalStrategy"
+    ]
+  }
+]`;
+
+        document.getElementById('parseBtn').addEventListener('click', parseJSON);
+        document.getElementById('clearBtn').addEventListener('click', clearInput);
+        document.getElementById('loadSampleBtn').addEventListener('click', loadSample);
+        document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
+        document.getElementById('previewCsvBtn').addEventListener('click', previewCSV);
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('parseBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('parseBtn').disabled = false;
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successText').textContent = message;
+            document.getElementById('successMessage').classList.remove('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+        }
+
+        async function parseJSON() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+            const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+            const enableAI = document.getElementById('enableAI').checked;
+            const platform = document.getElementById('platformSelect').value;
+
+            if (!jsonInput) {
+                showError('Vui lòng nhập JSON content.');
+                return;
+            }
+
+            showLoading();
+            hideMessages();
+
+            try {
+                const response = await fetch('/api/parse-json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        json_content: jsonInput,
+                        gemini_api_key: geminiApiKey,
+                        enable_ai: enableAI,
+                        platform: platform
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentData = result.data;
+                    currentHeaders = result.headers;
+                    currentPlatformHeaders = result.platform_headers;
+
+                    displayResults(result);
+
+                    let successMsg = `Đã phân tích thành công ${result.total_posts} bài viết.`;
+                    if (result.ai_enhanced) {
+                        successMsg += ` ✨ Content đã được AI tối ưu cho ${platform}.`;
+                    }
+                    showSuccess(successMsg);
+                } else {
+                    showError(result.error || 'Có lỗi xảy ra khi phân tích JSON.');
+                }
+            } catch (error) {
+                showError('Lỗi kết nối: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResults(result) {
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // Update stats
+            document.getElementById('totalPosts').textContent = result.total_posts;
+
+            // Count post types
+            const postTypes = {};
+            result.posts.forEach(post => {
+                const type = post.post_type || 'Unknown';
+                postTypes[type] = (postTypes[type] || 0) + 1;
+            });
+
+            document.getElementById('carouselPosts').textContent = postTypes['Carousel'] || 0;
+            document.getElementById('pollPosts').textContent = postTypes['Poll'] || 0;
+            document.getElementById('storyPosts').textContent = postTypes['Short Story'] || 0;
+
+            // Display posts preview
+            displayPostsPreview(result.posts);
+        }
+
+        function displayPostsPreview(posts) {
+            const container = document.getElementById('postsPreview');
+            container.innerHTML = '';
+
+            posts.forEach((post, index) => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post-preview';
+
+                postDiv.innerHTML = `
+                    <div class="post-header">
+                        <div>
+                            <span class="post-type">${post.post_type || 'Unknown'}</span>
+                            <span class="post-date">${post.post_time || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div class="post-content">${post.content || 'No content'}</div>
+                    <div class="post-meta">
+                        <span class="meta-item">📅 ${post.post_time || 'N/A'}</span>
+                        <span class="meta-item">🏷️ ${post.tags || 'No tags'}</span>
+                        <span class="meta-item">🔗 ${post.utm_link || 'No link'}</span>
+                    </div>
+                `;
+
+                container.appendChild(postDiv);
+            });
+        }
+
+        function clearInput() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+            hideMessages();
+            currentData = null;
+            currentHeaders = null;
+            currentPlatformHeaders = null;
+        }
+
+        function loadSample() {
+            document.getElementById('jsonInput').value = sampleData;
+        }
+
+        async function downloadCSV() {
+            if (!currentData || !currentHeaders) {
+                showError('Không có dữ liệu để tải xuống. Vui lòng phân tích JSON trước.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/download-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        headers: currentHeaders,
+                        data: currentData,
+                        delimiter: ',',  // Always use comma for GoHighLevel format
+                        platform_headers: currentPlatformHeaders,
+                        filename: 'goHighLevel_data.csv'
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'goHighLevel_data.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showError('Lỗi khi tải xuống file CSV.');
+                }
+            } catch (error) {
+                showError('Lỗi khi tải xuống: ' + error.message);
+            }
+        }
+
+        function previewCSV() {
+            if (!currentData || !currentHeaders) {
+                showError('Không có dữ liệu để xem trước. Vui lòng phân tích JSON trước.');
+                return;
+            }
+
+            // Generate CSV preview
+            const csvPreview = document.getElementById('csvPreview');
+            const csvContent = document.getElementById('csvContent');
+
+            // Show first few rows
+            let csvText = '';
+            if (currentPlatformHeaders) {
+                csvText += currentPlatformHeaders.join(',') + '\n';
+            }
+            csvText += currentHeaders.join(',') + '\n';
+
+            // Show first 3 data rows
+            currentData.slice(0, 3).forEach(row => {
+                csvText += row.join(',') + '\n';
+            });
+
+            if (currentData.length > 3) {
+                csvText += `... và ${currentData.length - 3} dòng khác`;
+            }
+
+            csvContent.textContent = csvText;
+            csvPreview.classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>
